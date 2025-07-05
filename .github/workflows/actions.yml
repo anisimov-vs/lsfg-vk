@@ -47,9 +47,11 @@ jobs:
         run: |
           sudo -u builder bash -c '
             mkdir -p build
-            CC=clang CXX=clang++ cmake -B build -G Ninja \
+            cmake -B build -G Ninja \
               -DCMAKE_BUILD_TYPE=Release \
-              -DCMAKE_INSTALL_PREFIX=$PWD/install
+              -DCMAKE_INSTALL_PREFIX=$PWD/release \
+              -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
+              -DCMAKE_CXX_CLANG_TIDY=""
             cmake --build build
             cmake --install build
           '
@@ -58,4 +60,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: binaries
-          path: install/
+          path: release/
