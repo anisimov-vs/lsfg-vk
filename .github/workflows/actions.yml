@@ -1,0 +1,55 @@
+name: Build
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+
+    steps:
+      - name: Install dependencies
+        run: |
+          pacman -Sy --noconfirm --needed \
+            base-devel \
+            git \
+            clang \
+            cmake \
+            ninja \
+            meson \
+            vulkan-icd-loader \
+            vulkan-tools \
+            vulkan-headers \
+            spirv-headers \
+            sdl2 \
+            sdl3 \
+            glfw \
+            glslang \
+            libdisplay-info
+
+      - name: Add non-root user
+        run: |
+          useradd -m builder
+          echo 'builder ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+          chown -R builder .
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Build as builder
+        run: |
+          sudo -u builder bash -c '
+            mkdir -p build
+            CC=clang CXX=clang++ cmake -B build -G Ninja \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_INSTALL_PREFIX=$PWD/install
+            cmake --build build
+            cmake --install build
+          '
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: install/
